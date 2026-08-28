@@ -1,6 +1,9 @@
 name: Free Windows RDP
 
-on: workflow_dispatch
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
   build:
