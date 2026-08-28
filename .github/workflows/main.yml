@@ -1,4 +1,4 @@
-name: Free Windows RDP
+name: Stable Windows RDP
 
 on:
   push:
@@ -8,23 +8,31 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 360
+
     steps:
     - name: Enable Remote Desktop & Disable NLA
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
+        Set-ItemProperty -Path 'HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services' -Name "MaxIdleTime" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
-    - name: Set Password
+    - name: Configure Admin User
       run: |
         $admin = [adsi]"WinNT://./runneradmin,user"
         $admin.SetPassword("MyPassword123#")
 
-    - name: Start Tunnel Keepalive
+    - name: Start Cloudflare Tunnel
       run: |
-        Invoke-WebRequest https://github.com/ekzhang/bore/releases/download/v0.5.0/bore-v0.5.0-x86_64-pc-windows-msvc.zip -OutFile bore.zip
-        Expand-Archive bore.zip -DestinationPath .
+        Invoke-WebRequest https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
+        Start-Process -FilePath ".\cloudflared.exe" -ArgumentList "tunnel --url tcp://localhost:3389" -RedirectStandardError "tunnel.log" -NoNewWindow
+        Start-Sleep -Seconds 8
+        Get-Content tunnel.log | Select-String "trycloudflare.com"
+
+    - name: Keep Alive (Prevent Disconnect)
+      run: |
         while ($true) {
-            .\bore.exe local 3389 --to bore.pub
-            Start-Sleep -Seconds 2
+            Get-Content tunnel.log -Tail 5
+            Start-Sleep -Seconds 30
         }
