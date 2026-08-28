@@ -14,11 +14,10 @@ jobs:
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
-    - name: Create User
-      shell: cmd
+    - name: Set Password
       run: |
-        net user runneradmin MyPassword123# /add /Y
-        net localgroup administrators runneradmin /add
+        $admin = [adsi]"WinNT://./runneradmin,user"
+        $admin.SetPassword("MyPassword123#")
 
     - name: Start Tunnel
       shell: cmd
