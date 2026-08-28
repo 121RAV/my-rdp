@@ -20,9 +20,11 @@ jobs:
         $admin = [adsi]"WinNT://./runneradmin,user"
         $admin.SetPassword("MyPassword123#")
 
-    - name: Start Tunnel
-      shell: cmd
+    - name: Start Tunnel Keepalive
       run: |
-        curl -sL https://github.com/ekzhang/bore/releases/download/v0.5.0/bore-v0.5.0-x86_64-pc-windows-msvc.zip -o bore.zip
-        tar -xf bore.zip
-        bore.exe local 3389 --to bore.pub
+        Invoke-WebRequest https://github.com/ekzhang/bore/releases/download/v0.5.0/bore-v0.5.0-x86_64-pc-windows-msvc.zip -OutFile bore.zip
+        Expand-Archive bore.zip -DestinationPath .
+        while ($true) {
+            .\bore.exe local 3389 --to bore.pub
+            Start-Sleep -Seconds 2
+        }
