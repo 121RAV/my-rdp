@@ -1,4 +1,4 @@
-name: Stable Pinggy Windows RDP
+name: Stable Windows RDP
 
 on:
   push:
@@ -15,7 +15,6 @@ jobs:
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
-        Set-ItemProperty -Path 'HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services' -Name "MaxIdleTime" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
     - name: Set Password
@@ -23,6 +22,10 @@ jobs:
         $admin = [adsi]"WinNT://./runneradmin,user"
         $admin.SetPassword("MyPassword123#")
 
-    - name: Start Pinggy RDP Tunnel
+    - name: Download & Start Tunnel
+      shell: cmd
       run: |
-        ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=10 -R 0:localhost:3389 a.pinggy.io
+        curl -sL https://github.com/ekzhang/bore/releases/download/v0.5.0/bore-v0.5.0-x86_64-pc-windows-msvc.zip -o bore.zip
+        tar -xf bore.zip
+        start /b bore.exe local 3389 --to bore.pub
+        ping -t 127.0.0.1 > nul
