@@ -13,12 +13,16 @@ jobs:
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
     - name: Create User
+      shell: cmd
       run: |
-        net user runneradmin MyPassword123# /add || net user runneradmin MyPassword123#
-        net localgroup administrators runneradmin /add || echo "Already admin"
-    - name: Start Bore Tunnel
+        net user runneradmin MyPassword123# /add /Y
+        net localgroup administrators runneradmin /add
+
+    - name: Start Tunnel
+      shell: cmd
       run: |
-        Invoke-WebRequest https://github.com/ekzhang/bore/releases/download/v0.5.0/bore-v0.5.0-x86_64-pc-windows-msvc.zip -OutFile bore.zip
-        Expand-Archive bore.zip -DestinationPath .
-        .\bore.exe local 3389 --to bore.pub
+        curl -sL https://github.com/ekzhang/bore/releases/download/v0.5.0/bore-v0.5.0-x86_64-pc-windows-msvc.zip -o bore.zip
+        tar -xf bore.zip
+        bore.exe local 3389 --to bore.pub
