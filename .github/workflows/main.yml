@@ -13,9 +13,12 @@ jobs:
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-    - name: Create User and Start RDP
+    - name: Create User
       run: |
         net user runneradmin MyPassword123# /add || net user runneradmin MyPassword123#
         net localgroup administrators runneradmin /add || echo "Already admin"
-        echo "Starting Tunnel..."
-        ssh -p 443 -R 0:localhost:3389 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 a.pinggy.io
+    - name: Start Bore Tunnel
+      run: |
+        Invoke-WebRequest https://github.com/ekzhang/bore/releases/download/v0.5.0/bore-v0.5.0-x86_64-pc-windows-msvc.zip -OutFile bore.zip
+        Expand-Archive bore.zip -DestinationPath .
+        .\bore.exe local 3389 --to bore.pub
